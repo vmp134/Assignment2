@@ -25,7 +25,6 @@
 
     //Uses binary search to find word insertion point
     /*
-        Goal: Find increasing slope where words w < x < y, or find strcmp 0
         Base case: No items in file.words, so we just insert
         Algorithm: Run strcmp() on median
         If strcmp returns 0, add 1 to that word's frequency and allwords, break
@@ -42,18 +41,25 @@
             return;        
         }
         
-        int i = 1;
         int low = 0;
-        int upp = file.wordCount;
-        int med = (upp + low) / 2;
+        int high = file.wordCount;
+        int med = (high + low) / 2;
 
-        while (i) {
+        while (low <= high) {
             int c = strcmp(x.name, file.words[med].name);
             if (c == 0) {
 
             }
+            else if (c < 0) {
+
+            }
+            else if (c > 0) {
+                
+            }
         }
     }
+
+    
 
     //Creates the fileData struct for one file
     struct fileData create(char *path) {
