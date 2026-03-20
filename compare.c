@@ -23,23 +23,35 @@
 
 //Helper Functions
 
-    //Uses binary search to find word insertion point using strcmp()
+    //Uses binary search to find word insertion point
     /*
-        Goal: Find increasing slope where words w < x < y
+        Goal: Find increasing slope where words w < x < y, or find strcmp 0
         Base case: No items in file.words, so we just insert
-        Algorithm: Run strcmp() on median-1, median, and median+1. If the two slots inbetween fit our goal, insert
-        Else if word is less than all of them, recurse with upper = median-1
-        Else if word is greater than all of them, recurse with lower = median + 1
+        Algorithm: Run strcmp() on median
+        If strcmp returns 0, add 1 to that word's frequency and allwords, break
+        Else if strcmp returns -1, recurse with upper = med-1
+        Else if strcmp returns 1, recurse with lower = med+1
+        Else if word not found, WORK NEEDED
         Expected runtime: O(log(n))
     */
     void insert(struct fileData file, struct word x) {
+        if (file.wordCount == 0) {
+            file.words[0] = x;
+            file.wordCount++;
+            file.allWords++;
+            return;        
+        }
+        
         int i = 1;
-        int lower = 0;
-        int upper = file.wordCount;
-        int median = (upper - lower) / 2;
+        int low = 0;
+        int upp = file.wordCount;
+        int med = (upp + low) / 2;
 
         while (i) {
-            break;
+            int c = strcmp(x.name, file.words[med].name);
+            if (c == 0) {
+
+            }
         }
     }
 
