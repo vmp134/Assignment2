@@ -37,10 +37,11 @@
     //This yields us O(n) for each movement phase, for EACH WORD. O(n^2) worst case. This is the same as the linked list approach.
     //This is inefficient, and I think we'll do the following:
     /*
-        Use an array "Words" to find unique words
-            if word is not in array, append and create new word struct with count 1
-            if word is in the array, count++
-        O(nlogn) sort the fileData words array using strcmp 
+        Use an array "Words" to find words
+            append each word to the array regardless of uniqueness
+            sort the array so identical words are next to each other in O(nlogn)
+            Condense identical words into one word struct, which is an O(n) walkthrough 
+            Overall, should be O(nlogn), but uses more memory
     */
     /*
     void insert(struct fileData file, struct word x) {
