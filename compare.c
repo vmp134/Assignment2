@@ -33,6 +33,16 @@
         Else if word not found, WORK NEEDED
         Expected runtime: O(log(n))
     */
+    //NOTE: As of 3/23, I've realized if we have an array like this, we would need to move EVERY word up one space if we wanna insert.
+    //This yields us O(n) for each movement phase, for EACH WORD. O(n^2) worst case. This is the same as the linked list approach.
+    //This is inefficient, and I think we'll do the following:
+    /*
+        Use an array "Words" to find unique words
+            if word is not in array, append and create new word struct with count 1
+            if word is in the array, count++
+        O(nlogn) sort the fileData words array using strcmp 
+    */
+    /*
     void insert(struct fileData file, struct word x) {
         if (file.wordCount == 0) {
             file.words[0] = x;
@@ -58,7 +68,7 @@
             }
         }
     }
-
+    */
     
 
     //Creates the fileData struct for one file
