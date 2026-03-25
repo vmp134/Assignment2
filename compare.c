@@ -19,6 +19,7 @@
         struct word *words; //The array containing word structs
         int wordCount;      //Total unique words
         int allWords;       //Total words 
+        int capacity;       //Room we have before realloc
     };
 
 //Helper Functions
@@ -31,12 +32,12 @@
         Else if strcmp returns -1, recurse with upper = med-1
         Else if strcmp returns 1, recurse with lower = med+1
         Else if word not found, WORK NEEDED
-        Expected runtime: O(log(n))
-        Expected insert time: O(n) for shifting all words to the right
-        Expected overall runtime: O(n^2)
+        Expected insert time: O(n) for shifting all words to the right worst case, best case we find the word and freq++ so O(logn)
+        Expected overall runtime: O(n^2) worst, O(nlogn) best
     */
     void insert(struct fileData file, struct word x) {
         if (file.wordCount == 0) {
+            file.words = malloc(4*sizeOf(struct word));
             file.words[0] = x;
             file.wordCount++;
             file.allWords++;
@@ -60,8 +61,6 @@
             }
         }
     }
-
-    
 
     //Creates the fileData struct for one file
     struct fileData create(char *path) {
