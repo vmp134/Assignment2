@@ -73,9 +73,7 @@
         //Unique Word - first we check if capacity is large enough
         if (file->uniqueWords >= file->capacity) {
             //newCapacity setup
-            int newCapacity = 0;
-            if (file->capacity == 0) newCapacity = 10;
-            else newCapacity = file->capacity * 2;
+            int newCapacity = file->capacity * 2;
 
             //realloc and error checking
             struct word *temp = realloc(file->words, newCapacity * sizeof(struct word));
@@ -105,11 +103,14 @@
     //Creates the fileData struct for one file
     //NOTE: MAKE SURE WORD PASSED TO INSERT IS LOWERCASE
     struct fileData create(char *path) {
+        //Initial variables, have initial capacity be 10
         struct fileData file;
-            file.name = path;
-            file.uniqueWords = 0;
-            file.totalWords = 0;
-
+        file.name = path;
+        file.uniqueWords = 0;
+        file.totalWords = 0;
+        file.capacity = 10;
+        file.words = malloc(10 * sizeof(struct word));
+        
         int fd = open(path, O_RDONLY);
 
 
@@ -128,15 +129,19 @@
     }
 
 //Main
+    /*
+    Run a for loop for all args
+    Recursively search for text files then create filedata struct for all and yadda yadda
+        I think we check if dir first using opendir, and if null use create
+        Be sure to skip dotfiles (files that start with ".")
+    We would have n choose 2 comparisons total
+        My opinion on comparisons: may be best to do nested for loop where
+        for i=0 to n, for j=i+1 to n
+        to compare every single one with each other
+    I think the function call itself also counts as an arg iirc so skip that but I could be wrong
 
+    p2.pdf: Comparisons are printed in decreasing order of combined word count (that is, the total number of words in both files). 
+    */
     int main(int argc, char **argv) {
-        //Run a for loop for all args
-            //Recursively search for text files then create filedata struct for all and yadda yadda
-            //I think we check if dir first using opendir, and if null use create
-            //Be sure to skip dotfiles (files that start with ".")
-        //We would have n choose 2 comparisons total
-            //My opinion on comparisons: may be best to do nested for loop where
-            //for i=0 to n, for j=i+1 to n
-            //to compare every single one with each other
-        //I think the function call itself also counts as an arg iirc so skip that but I could be wrong
+
     }
