@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #define BUFFERLENGTH 4096
+#define NC2(X) (((X)*((X)-1))/2)
 
 // Initialization
 
@@ -170,6 +171,10 @@ struct fileData *create(char *path) {
   return file;
 }
 
+int compare(struct comparison *c1, struct comparison *c2) {
+  return (c1->totalWords - c2->totalWords);
+}
+
 //Frees memory for unused fileData structs
 void destroyFile(struct fileData *file) {
   for (int i = 0; i < file->uniqueWords; i++) {
@@ -192,6 +197,7 @@ void wfd(struct fileData *file) {
     file->words[i].frequency = (double)file->words[i].count / file->totalWords;
   }
 }
+
 // Calculates Jenson-Shannon Distance
 double jsd(struct fileData *f1, struct fileData *f2) {
   double kld1 = 0.0, kld2 = 0.0;
@@ -255,24 +261,39 @@ int main(int argc, char **argv) {
 
   //fileData Creation and Comparison
   struct fileData **files = malloc(totalFiles * sizeof(struct fileData *));
+  struct comparison **comps = malloc(NC2(totalFiles) * sizeof(struct comparison *));
+  int x = 0;
   for (int i = 0; i < totalFiles; i++) {
-
-
+    files[i] = create(fileNames[i]);
+    wfd(files[i]);
     for (int j = 0; j < i; j++) {
-
+      struct comparison *tempComp = malloc(sizeof(struct comparison));
+      tempComp->f1 = files[j]; 
+      tempComp->f2 = files[i];
+      tempComp->jsd = jsd(files[i], files[j]);
+      tempComp->totalWords = files[i]->totalWords + files[j]->totalWords;
+      comps[x] = tempComp;
+      x++;
     }
   }
 
   //Sorting the Comparisons
-  
+  qsort(comps, NC2(totalFiles), sizeof(struct comparison *), compare);
 
   //Printed Results
+  for (int i = 0; i < NC2(totalFiles); i++) {
+
+  }
 
   //Memory Cleanup
   for (int i = 0; i < totalFiles; i++) {
-    destroy(files[i]);
+    destroyFile(files[i]);
   }
   free(files);
-
+  for (int i = 0; i < NC2(totalFiles); i++) {
+    destroyComparison(comps[i]);
+  }
+  free(comps);
+  
   return EXIT_SUCCESS;
 }
