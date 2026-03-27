@@ -111,23 +111,40 @@ void insert(struct fileData *file, char *newWordName) {
    to get last word we're not using an actual stack I'm just saying push and pop
    because same logic
 */
-struct fileData create(char *path) {
+struct fileData *create(char *path) {
   // fileData initialization
-  struct fileData file;
-  file.name = strdup(path);
-  file.uniqueWords = 0;
-  file.totalWords = 0;
-  file.capacity = 10;
-  file.words = malloc(10 * sizeof(struct word));
+  struct fileData *file = malloc(sizeof(struct fileData));
+  file->name = strdup(path);
+  file->uniqueWords = 0;
+  file->totalWords = 0;
+  file->capacity = 10;
+  file->words = malloc(10 * sizeof(struct word));
 
   // File variables
   char buf[BUFFERLENGTH];
+  char *temp = malloc(64*sizeof(char));
   size_t bytesRead;
   int fd = open(path, O_RDONLY);
 
   // Read Loop
+  for (int i = 0; read(fd, buf, BUFFERLENGTH) /*NOT COMPLETE*/; i += BUFFERLENGTH) {
+
+  }
+
+  // Final Word Check
+
 
   return file;
+}
+
+//Frees memory for unused fileData structs
+int destroy(struct fileData *file) {
+  for (int i = 0; i < file->uniqueWords; i++) {
+    free(file->words[i].name);
+  }
+  free(file->words);
+  free(file->name);
+  free(file);
 }
 
 // Calculates Word Frequency Distribution
@@ -186,7 +203,30 @@ where for i=0 to n, for j=i+1 to n to compare every single one with each other
 I think the function call itself also counts as an arg iirc so skip that but I
 could be wrong
 
-p2.pdf: Comparisons are printed in decreasing order of combined word count (that
-is, the total number of words in both files).
+p2.pdf: Comparisons are printed in decreasing order of combined word count (that is, the total number of words in both files).
 */
-int main(int argc, char **argv) {}
+int main(int argc, char **argv) {
+  //File Search
+  int totalFiles = argc;
+  char *path = "";
+  for (int i = 1; i < totalFiles; i++) {
+    path = argv[i];
+  }
+  struct fileData **files = malloc(totalFiles * sizeof(struct fileData));
+  
+
+  //Comparison loop
+  for (int i = 0; i < totalFiles; i++) {
+    for (int j = i+1; j < totalFiles; j++) {
+
+    }
+  }
+
+  //Memory Cleanup
+  for (int i = 0; i < totalFiles; i++) {
+    destroy(files[i]);
+  }
+  free(files);
+
+  return EXIT_SUCCESS;
+}

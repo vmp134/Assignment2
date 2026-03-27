@@ -41,19 +41,35 @@
                 If not, we realloc to double capacity, and set capacity *= 2.
                 We create the new word struct to hold our word, and increment fileData.uniqueWords and fileData.totalWords.
 
+        We chose a dynamic array to avoid the cost of a struct word *next pointer per struct word for LinkedList.
+            Instead of having an O(n) node traversal to find our word, we get an O(logn) find. 
+            Unfortunately, we take the hit for inserting unique words. we must move a large portion of memory, rather than updating a *next pointer.
+            This also gives us the freedom to search up any word, as we get indices instead of LinkedList pointer traversal. 
+
+        Our expected runtime is:
+            O(1), assuming binary search 
+
         insert() does not return, and exits upon a realloc failure. 
 
     - create() 
         create() initializes a new fileData struct for a given file.
             create() takes the path of the file.
+            
             For each word in the file, create() calls insert().
+        
 
-        Upon completion, create() returns the fileData struct for a file, but has all word frequencies set to 0.0.     
+
+        Upon completion, create() returns the fileData struct for a file, but has all word frequencies set to 0.0.    
+
+    - destroy()
+        destroy() frees up all memory used for one struct fileData. 
 
     - wfd()
         wfd() calculates the word frequency distribution of a file.
             wfd() takes a fileData struct.
             For each word in fileData.words, wfd() sets word.frequency = word.count/fileData.totalWords.
+
+        Our expected runtime is O(n).
 
         Upon completion, wfd() does not return.
 
