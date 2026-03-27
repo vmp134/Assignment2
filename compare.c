@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
 
   //Printed Results
   for (int i = 0; i < NC2(totalFiles); i++) {
-
+    printf("%d %s %s\n", comps[i]->jsd, comps[i]->f1, comps[i]->f2);
   }
 
   //Memory Cleanup
