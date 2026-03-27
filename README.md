@@ -6,30 +6,30 @@
 
 2. Design Notes
     - structure TODO (erase TODO and this text when done)
-        Our project consists of the following structs to keep track of one file's data:
-            struct word 
-                char *name
-                int count
-                double frequency
-            struct fileData 
-                char *name
-                struct word *words
-                int uniqueWords
-                int totalWords
-                int capacity
-            struct comparison
-                char *f1
-                char *f2
-                double jsd
-                int totalwords
+        - Our project consists of the following structs to keep track of one file's data:
+            - struct word 
+                - char *name
+                - int count
+                - double frequency
+            - struct fileData 
+                - char *name
+                - struct word *words
+                - int uniqueWords
+                - int totalWords
+                - int capacity
+            - struct comparison
+                - char *f1
+                - char *f2
+                - double jsd
+                - int totalwords
 
-        Here are our notes on the three:
-            struct word
-                Stores the name of the word, how many times it appears, and frequency.
-            struct fileData
-                Stores the name of the file, an array of word structs, total amount of unique words, total words, and the capacity of the struct word array.
-            struct comparison
-                Stores the names of two compared files, their Jenson-Shannon Distance, and the total words between the two.
+        - Here are our notes on the three:
+            - struct word
+                - Stores the name of the word, how many times it appears, and frequency.
+            - struct fileData
+                - Stores the name of the file, an array of word structs, total amount of unique words, total words, and the capacity of the struct word array.
+            - struct comparison
+                - Stores the names of two compared files, their Jenson-Shannon Distance, and the total words between the two.
 
         Our project performs the following in main():
             Searches directories and subdirectories in the given path names for .txt files.
