@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <math.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,17 +148,17 @@ struct fileData *create(char *path) {
           char *temporaryTemp = realloc(temp, tempCapacity * 2);
           if (!temporaryTemp) {
             perror("realloc");
-            atexit(EXIT_FAILURE);
+            exit(EXIT_FAILURE);
           }
           temp = temporaryTemp; 
         }
-        temp[tempLength] = readCharacter;
+        temp[tempLength] = tolower(readCharacter);
         tempLength++;
       }
       else if (tempLength > 0) {
         temp[tempLength] = '\0';
         insert(file, strdup(temp));
-        temp = "";
+        tempLength = 0;
       }
     }
   } while (bytesRead > 0);
@@ -172,7 +173,7 @@ struct fileData *create(char *path) {
 }
 
 int compare(struct comparison *c1, struct comparison *c2) {
-  return (c1->totalWords - c2->totalWords);
+  return (c2->totalWords - c1->totalWords);
 }
 
 //Frees memory for unused fileData structs
@@ -268,8 +269,8 @@ int main(int argc, char **argv) {
     wfd(files[i]);
     for (int j = 0; j < i; j++) {
       struct comparison *tempComp = malloc(sizeof(struct comparison));
-      tempComp->f1 = files[j]; 
-      tempComp->f2 = files[i];
+      tempComp->f1 = files[j]->name; 
+      tempComp->f2 = files[i]->name;
       tempComp->jsd = jsd(files[i], files[j]);
       tempComp->totalWords = files[i]->totalWords + files[j]->totalWords;
       comps[x] = tempComp;
@@ -277,7 +278,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  //Sorting the Comparisons
+  //Sorting the Comparisons in Descending Order
   qsort(comps, NC2(totalFiles), sizeof(struct comparison *), compare);
 
   //Printed Results
