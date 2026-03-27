@@ -7,6 +7,8 @@
 #include <fcntl.h>
 #include <dirent.h>
 
+#define BUFFERLENGTH 4096
+
 //Initialization
 
     struct word {   
@@ -72,11 +74,8 @@
 
         //Unique Word - first we check if capacity is large enough
         if (file->uniqueWords >= file->capacity) {
-            //newCapacity setup
-            int newCapacity = file->capacity * 2;
-
             //realloc and error checking
-            struct word *temp = realloc(file->words, newCapacity * sizeof(struct word));
+            struct word *temp = realloc(file->words, file->capacity * 2 * sizeof(struct word));
             if (!temp) {
                 perror("realloc");
                 exit(EXIT_FAILURE);
@@ -84,7 +83,7 @@
 
             //variable updating
             file->words = temp;
-            file->capacity = newCapacity;
+            file->capacity *= 2;
         }
 
         //Unique Word - then we shift (if not at end) and insert 
@@ -101,19 +100,30 @@
     }
 
     //Creates the fileData struct for one file
-    //NOTE: MAKE SURE WORD PASSED TO INSERT IS LOWERCASE
+    /*
+        NOTE: MAKE SURE WORD PASSED TO INSERT IS LOWERCASE
+
+        What we'll do is just have a string that we keep pushing chars into and pop if we see a space
+        call insert() on the word found and loop until EOF
+        Since we are checking for spaces to pop, we need to see if file did not end in space to get last word
+        we're not using an actual stack I'm just saying push and pop because same logic
+    */
     struct fileData create(char *path) {
-        //Initial variables, have initial capacity be 10
+        //fileData initialization
         struct fileData file;
-        file.name = path;
+        file.name = strdup(path);
         file.uniqueWords = 0;
         file.totalWords = 0;
         file.capacity = 10;
         file.words = malloc(10 * sizeof(struct word));
         
+        //File variables
+        char buf[BUFFERLENGTH];
+        size_t bytesRead;
         int fd = open(path, O_RDONLY);
 
-
+        //Read Loop
+        
 
         return file;
     }
