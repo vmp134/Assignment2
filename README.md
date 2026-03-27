@@ -17,15 +17,25 @@
                 int uniqueWords
                 int totalWords
                 int capacity
+            struct comparison
+                char *f1
+                char *f2
+                double jsd
+                int totalwords
 
-        Here are our notes on the two:
+        Here are our notes on the three:
             struct word
                 Stores the name of the word, how many times it appears, and frequency.
             struct fileData
                 Stores the name of the file, an array of word structs, total amount of unique words, total words, and the capacity of the struct word array.
+            struct comparison
+                Stores the names of two compared files, their Jenson-Shannon Distance, and the total words between the two.
 
         Our project performs the following in main():
-
+            Searches directories and subdirectories in the given path names for .txt files.
+            Creates and compares fileData structs.
+            Sorts the fileData structs in descending order, and prints those results.
+            Cleans up used memory.
 
     - insert()
         insert() uses binary search to find the correct insertion point of a word.
@@ -47,22 +57,38 @@
             This also gives us the freedom to search up any word, as we get indices instead of LinkedList pointer traversal. 
 
         Our expected runtime is:
-            O(1), assuming binary search 
+            O(1), assuming binary search reaches best case
+            O(logn) for a word already in struct
+            o(n + logn) for a unique word
 
-        insert() does not return, and exits upon a realloc failure. 
+        insert() does not return.
 
     - create() 
         create() initializes a new fileData struct for a given file.
-            create() takes the path of the file.
-            
-            For each word in the file, create() calls insert().
+            create() takes the path of the file, and initializes a fileData struct.
+            create() then performs a tokenizing step on the file.
+                We have a temporary string that we "push" characters into, and "pop" out a word when we reach a space.
+                For each word in the file, create() calls insert().
+            create() runs one final check to 
         
+        Upon completion, create() returns the fileData struct for a file, but has all word frequencies set to 0.0.  
 
+    - compare()
+        compare() calculates the difference between two comparison structs' totalWords.
+            In our code, the implementation is c2->totalWords - c1->totalWords.
+            compare() is used later in qsort() in main(). 
+        
+        Cases
+            Case 1: c1 has more words, so the difference is negative. c1 will be placed first.
+            Case 2: c2 has more words, so the difference is positive. c2 will be placed first.
+            Case 3: totalWords are equal, and qsort() handles sorting.
 
-        Upon completion, create() returns the fileData struct for a file, but has all word frequencies set to 0.0.    
+        Upon completion, compare() returns the difference as an int.
 
-    - destroy()
-        destroy() frees up all memory used for one struct fileData. 
+    - destroyFile() and destroyComparison()
+        destroyFile() and destroyComparison() frees up all memory used for one struct fileData or one struct comparison. 
+
+        Upon completion, destroyFile() and destroyComparison() do not return.
 
     - wfd()
         wfd() calculates the word frequency distribution of a file.
