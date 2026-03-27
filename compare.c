@@ -25,6 +25,13 @@ struct fileData {
   int capacity;       // Room we have before realloc
 };
 
+struct comparison {
+  char *f1;
+  char *f2;
+  double jsd;
+  int totalWords;
+};
+
 // Helper Functions
 
 // Uses binary search to find word insertion point
@@ -74,8 +81,7 @@ void insert(struct fileData *file, char *newWordName) {
   // Unique Word - first we check if capacity is large enough
   if (file->uniqueWords >= file->capacity) {
     // realloc and error checking
-    struct word *temp =
-        realloc(file->words, file->capacity * 2 * sizeof(struct word));
+    struct word *temp = realloc(file->words, file->capacity * 2 * sizeof(struct word));
     if (!temp) {
       perror("realloc");
       exit(EXIT_FAILURE);
@@ -122,23 +128,50 @@ struct fileData *create(char *path) {
 
   // File variables
   char buf[BUFFERLENGTH];
-  char *temp = malloc(64*sizeof(char));
-  size_t bytesRead;
+  size_t bytesRead = 0;
   int fd = open(path, O_RDONLY);
 
-  // Read Loop
-  for (int i = 0; read(fd, buf, BUFFERLENGTH) /*NOT COMPLETE*/; i += BUFFERLENGTH) {
+  char *temp = malloc(64*sizeof(char));
+  int tempCapacity = 64;
+  int tempLength = 0;
 
-  }
+  // Tokenizing
+  do {
+    bytesRead = read(fd, buf, BUFFERLENGTH);
+    for (int i = 0; i < bytesRead; i++) {
+      char readCharacter = buf[i];
+
+      if (readCharacter == '-' || isalnum(readCharacter)) {
+        if (tempLength >= tempCapacity) {
+          char *temporaryTemp = realloc(temp, tempCapacity * 2);
+          if (!temporaryTemp) {
+            perror("realloc");
+            atexit(EXIT_FAILURE);
+          }
+          temp = temporaryTemp; 
+        }
+        temp[tempLength] = readCharacter;
+        tempLength++;
+      }
+      else if (tempLength > 0) {
+        temp[tempLength] = '\0';
+        insert(file, strdup(temp));
+        temp = "";
+      }
+    }
+  } while (bytesRead > 0);
 
   // Final Word Check
-
+  if (tempLength > 0) {
+    temp[tempLength] = '\0';
+    insert(file, strdup(temp));
+  }
 
   return file;
 }
 
 //Frees memory for unused fileData structs
-int destroy(struct fileData *file) {
+void destroyFile(struct fileData *file) {
   for (int i = 0; i < file->uniqueWords; i++) {
     free(file->words[i].name);
   }
@@ -146,6 +179,12 @@ int destroy(struct fileData *file) {
   free(file->name);
   free(file);
 }
+
+//Frees memory for unused comparison structs
+void destroyComparison(struct comparison *c) {
+  free(c->f1);
+  free(c->f2);
+} 
 
 // Calculates Word Frequency Distribution
 void wfd(struct fileData *file) {
@@ -209,18 +248,25 @@ int main(int argc, char **argv) {
   //File Search
   int totalFiles = argc;
   char *path = "";
+  char **fileNames;
   for (int i = 1; i < totalFiles; i++) {
     path = argv[i];
   }
-  struct fileData **files = malloc(totalFiles * sizeof(struct fileData));
-  
 
-  //Comparison loop
+  //fileData Creation and Comparison
+  struct fileData **files = malloc(totalFiles * sizeof(struct fileData *));
   for (int i = 0; i < totalFiles; i++) {
-    for (int j = i+1; j < totalFiles; j++) {
+
+
+    for (int j = 0; j < i; j++) {
 
     }
   }
+
+  //Sorting the Comparisons
+  
+
+  //Printed Results
 
   //Memory Cleanup
   for (int i = 0; i < totalFiles; i++) {
