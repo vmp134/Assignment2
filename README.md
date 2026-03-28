@@ -74,23 +74,36 @@
         - Upon completion, create() returns the fileData struct for a file, but has all word frequencies set to 0.0.  
 
     - hasSuffix()
+        - hasSuffix() checks to see if a string's last few characters match the given suffix.
+            - hasSuffix() is later used in fileSearch().
+
+        - Upon completion, hasSuffix returns 1 if the string matches, and 0 otherwise.
 
     - fileSearch()
+        - fileSearch() either:
+            - Takes a file path and adds it to the list of file paths initialized in main()
+            - Takes a directory path and recursively searches it for more directories or files.
+
+        - Upon completion, fileSearch() does not return.
 
     - wfd()
         - wfd() calculates the word frequency distribution of a file.
-            - wfd() takes a fileData struct.
+            - wfd() takes a pointer to a fileData struct.
             - For each word in fileData.words, wfd() sets word.frequency = word.count fileData.totalWords.
 
         - Our expected runtime is O(n).
 
         - Upon completion, wfd() does not return.
 
-    - jsd() TODO    
+    - jsd() 
+        - jsd() calculates the Jenson-Shannon Distance between two files.
+            - jsd() takes two pointers to two fileData structs.
+            - jsd() runs the calculations outlined in p2.pdf.
+        
+        - Upon completion, jsd() returns a double.
 
     - compare()
         - compare() calculates the difference between two comparison structs' totalWords.
-            - In our code, the implementation is c2->totalWords - c1->totalWords.
             - compare() is used later in qsort() in main(). 
         
         - Cases
