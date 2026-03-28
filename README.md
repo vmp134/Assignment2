@@ -51,7 +51,7 @@
                 - If not, we realloc to double capacity, and set capacity *= 2.
                 - We create the new word struct to hold our word, and increment fileData.uniqueWords and fileData.totalWords.
 
-        - We chose a dynamic array to avoid the cost of a struct word *next pointer per - struct word for LinkedList.
+        - We chose a dynamic array to avoid the cost of a struct word *next pointer per struct word for LinkedList.
             - Instead of having an O(n) node traversal to find our word, we get an O(logn) find. 
             - Unfortunately, we take the hit for inserting unique words. we must move a large portion of memory, rather than updating a *next pointer.
             - This also gives us the freedom to search up any word, as we get indices instead of LinkedList pointer traversal. 
