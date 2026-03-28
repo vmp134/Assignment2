@@ -5,7 +5,7 @@
 
 
 2. Design Notes
-    - structure TODO (erase TODO and this text when done)
+    - structure
         - Our project consists of the following structs to keep track of one file's data:
             - struct word 
                 - char *name
@@ -87,6 +87,8 @@
 
     - destroyFile() and destroyComparison()
         - destroyFile() and destroyComparison() frees up all memory used for one struct fileData or one struct comparison. 
+
+        - Notably, since we set struct comparison's f1 and f2 equal to the struct fileData's name field, we only have to free the pointer to struct comparison, otherwise we run into a double free error.
 
         - Upon completion, destroyFile() and destroyComparison() do not return.
 

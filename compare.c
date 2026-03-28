@@ -1,6 +1,8 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <math.h>
+#include <sys/stat.h>
+#include <limits.h>
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -37,17 +39,6 @@ struct comparison {
 // Helper Functions
 
 // Uses binary search to find word insertion point
-/*
-    Base case: No items in file.words, so we just insert
-    Algorithm: Run strcmp() on median
-        If strcmp returns 0, add 1 to that word's count and totalWords, return
-        Else if strcmp returns -1, recurse with upper = med-1
-        Else if strcmp returns 1, recurse with lower = med+1
-        Else if word not found, increase capacity if needed and shift elements +
-   insert Expected insert time: O(n) for shifting all words to the right worst
-   case, best case we find the word and count++ so O(logn) Expected overall
-   runtime: O(n^2) worst, O(nlogn) best
-*/
 void insert(struct fileData *file, char *newWordName) {
   // Initial Variables, adding 1 to totalWords since we insert
   file->totalWords++;
@@ -57,14 +48,6 @@ void insert(struct fileData *file, char *newWordName) {
   int cmp = 0;
 
   // Binary Search - we find the word
-  /*
-      Of note: if we can't find the word, we will end up with
-          low = high + 1
-      As we get to the insertion point around med,
-          low will be 1 above the last cmp > 0
-          high will be 1 below the last cmp < 0
-      Insertion point should be the space between, which doesn't exist yet
-  */
   while (low <= high) {
     med = low + ((high - low) / 2);
     cmp = strcmp(newWordName, file->words[med].name);
@@ -95,11 +78,6 @@ void insert(struct fileData *file, char *newWordName) {
   }
 
   // Unique Word - then we shift (if not at end) and insert
-  /*
-      We use low to be our insertion point, as the word before is guaranteed cmp
-     > 0 the word at low is also guaranteed cmp < 0, and thus we shift [low ...
-     uniqueWords] right one word I hope this writing makes sense to the reader
-  */
   if (low < file->uniqueWords)
     memmove(&file->words[low + 1], &file->words[low],
             (file->uniqueWords - low) * sizeof(struct word));
@@ -110,15 +88,6 @@ void insert(struct fileData *file, char *newWordName) {
 }
 
 // Creates the fileData struct for one file
-/*
-    NOTE: MAKE SURE WORD PASSED TO INSERT IS LOWERCASE
-
-    What we'll do is just have a string that we keep pushing chars into and pop
-   if we see a space call insert() on the word found and loop until EOF Since we
-   are checking for spaces to pop, we need to see if file did not end in space
-   to get last word we're not using an actual stack I'm just saying push and pop
-   because same logic
-*/
 struct fileData *create(char *path) {
   // fileData initialization
   struct fileData *file = malloc(sizeof(struct fileData));
@@ -138,14 +107,14 @@ struct fileData *create(char *path) {
   int tempLength = 0;
 
   // Tokenizing
-  do {
-    bytesRead = read(fd, buf, BUFFERLENGTH);
+  while ((bytesRead = read(fd, buf, BUFFERLENGTH)) > 0)  {
     for (int i = 0; i < bytesRead; i++) {
       char readCharacter = buf[i];
 
       if (readCharacter == '-' || isalnum(readCharacter)) {
         if (tempLength >= tempCapacity) {
-          char *temporaryTemp = realloc(temp, tempCapacity * 2);
+          tempCapacity *= 2;
+          char *temporaryTemp = realloc(temp, tempCapacity);
           if (!temporaryTemp) {
             perror("realloc");
             exit(EXIT_FAILURE);
@@ -161,7 +130,7 @@ struct fileData *create(char *path) {
         tempLength = 0;
       }
     }
-  } while (bytesRead > 0);
+  }
 
   // Final Word Check
   if (tempLength > 0) {
@@ -169,28 +138,65 @@ struct fileData *create(char *path) {
     insert(file, strdup(temp));
   }
 
+  free(temp);
+  close(fd);
   return file;
 }
 
-int compare(struct comparison *c1, struct comparison *c2) {
-  return (c2->totalWords - c1->totalWords);
+//Checks if a string has a suffix
+int hasSuffix(const char *name, const char *suffix) {
+  return (strlen(name) >= strlen(suffix) && strcmp(name + strlen(name) - strlen(suffix), suffix) == 0);
 }
 
-//Frees memory for unused fileData structs
-void destroyFile(struct fileData *file) {
-  for (int i = 0; i < file->uniqueWords; i++) {
-    free(file->words[i].name);
+//Recursively searches files
+void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
+  struct stat s;
+  if (stat(path, &s) == -1) return;
+
+  //Case where arg is file
+  if (S_ISREG(s.st_mode)) {
+    if (*i >= *capacity) {
+      *capacity *= 2;
+      *fileNames = realloc(*fileNames, *capacity * sizeof(char *));
+    }
+    (*fileNames)[*i] = strdup(path);
+    i++;
+    return;
   }
-  free(file->words);
-  free(file->name);
-  free(file);
-}
+  
+  DIR *dir = opendir(path);
+  if (!dir) return;
+  
+  struct dirent *directory;
+  while ((directory = readdir(dir)) != NULL) {
+    //Ignore dotfiles
+    if (directory->d_name[0] == '.') continue;
+    
+    //full path name
+    char *fullPath[_PC_PATH_MAX];
+    snprintf(fullPath, sizeof(fullPath), "%s/%s", path, directory->d_name);
 
-//Frees memory for unused comparison structs
-void destroyComparison(struct comparison *c) {
-  free(c->f1);
-  free(c->f2);
-} 
+    //Check type
+    struct stat st;
+    if (stat(fullPath, &st) == -1) continue;
+
+    if (S_ISDIR(st.st_mode)) {
+      fileSearch(fullPath, fileNames, i, capacity);
+    }
+    else if (S_ISREG(st.st_mode)) {
+      if (hasSuffix(directory->d_name, ".txt") == 0) {
+        if (*i >= *capacity) {
+          *capacity *= 2;
+          *fileNames = realloc(*fileNames, *capacity * sizeof(char *));
+        }
+        (*fileNames)[*i] = strdup(fullPath);
+        i++;
+      }
+    }
+  }
+
+  closedir(dir);
+}
 
 // Calculates Word Frequency Distribution
 void wfd(struct fileData *file) {
@@ -238,26 +244,39 @@ double jsd(struct fileData *f1, struct fileData *f2) {
   return sqrt(0.5 * kld1 + 0.5 * kld2);
 }
 
-// Main
-/*
-Run a for loop for all args
-Recursively search for text files then create filedata struct for all and yadda
-yadda I think we check if dir first using opendir, and if null use create Be
-sure to skip dotfiles (files that start with ".") We would have n choose 2
-comparisons total My opinion on comparisons: may be best to do nested for loop
-where for i=0 to n, for j=i+1 to n to compare every single one with each other
-I think the function call itself also counts as an arg iirc so skip that but I
-could be wrong
+//Compares two struct comparisons to ensure descending order
+int compare(const struct comparison *c1, const struct comparison *c2) {
+  return (c2->totalWords - c1->totalWords);
+}
 
-p2.pdf: Comparisons are printed in decreasing order of combined word count (that is, the total number of words in both files).
-*/
+//Frees memory for unused fileData structs
+void destroyFile(struct fileData *file) {
+  for (int i = 0; i < file->uniqueWords; i++) {
+    free(file->words[i].name);
+  }
+  free(file->words);
+  free(file->name);
+  free(file);
+}
+
+//Frees memory for unused comparison structs
+void destroyComparison(struct comparison *c) {
+  free(c);
+} 
+
+// Main
 int main(int argc, char **argv) {
+  if (argc < 2) return 0;
+
   //File Search
-  int totalFiles = argc;
+  //NOTE: SKIP DOTFILES
+  int totalFiles = argc-1;
   char *path = "";
-  char **fileNames;
-  for (int i = 1; i < totalFiles; i++) {
-    path = argv[i];
+  char **fileNames = malloc(10 * sizeof(char *));
+  int nameCapacity = 10;
+  for (int i = 0; i < totalFiles; i++) {
+    path = argv[i+1];
+    fileSearch(path, fileNames, i, nameCapacity);
   }
 
   //fileData Creation and Comparison
@@ -268,12 +287,12 @@ int main(int argc, char **argv) {
     files[i] = create(fileNames[i]);
     wfd(files[i]);
     for (int j = 0; j < i; j++) {
-      struct comparison *tempComp = malloc(sizeof(struct comparison));
-      tempComp->f1 = files[j]->name; 
-      tempComp->f2 = files[i]->name;
-      tempComp->jsd = jsd(files[i], files[j]);
-      tempComp->totalWords = files[i]->totalWords + files[j]->totalWords;
-      comps[x] = tempComp;
+      struct comparison *c = malloc(sizeof(struct comparison));
+      c->f1 = files[j]->name; 
+      c->f2 = files[i]->name;
+      c->jsd = jsd(files[i], files[j]);
+      c->totalWords = files[i]->totalWords + files[j]->totalWords;
+      comps[x] = c;
       x++;
     }
   }
@@ -283,7 +302,7 @@ int main(int argc, char **argv) {
 
   //Printed Results
   for (int i = 0; i < NC2(totalFiles); i++) {
-    printf("%d %s %s\n", comps[i]->jsd, comps[i]->f1, comps[i]->f2);
+    printf("%f %s %s\n", comps[i]->jsd, comps[i]->f1, comps[i]->f2);
   }
 
   //Memory Cleanup
