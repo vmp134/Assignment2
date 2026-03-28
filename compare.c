@@ -11,14 +11,19 @@
 #include <unistd.h>
 
 #define BUFFERLENGTH 4096
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 #define NC2(X) (((X)*((X)-1))/2)
 
 // Initialization
 
 struct word {
-  char *name;       // The word itself
-  int count;        // The count of said word
-  double frequency; // The frequency of said word
+  char *name;         // The word itself
+  int count;          // The count of said word
+  double frequency;   // The frequency of said word
 };
 
 struct fileData {
@@ -30,10 +35,10 @@ struct fileData {
 };
 
 struct comparison {
-  char *f1;
-  char *f2;
-  double jsd;
-  int totalWords;
+  char *f1;           // The name of file 1
+  char *f2;           // The name of file 2
+  double jsd;         // The Jenson-Shannon Distance
+  int totalWords;     // Total words between the two files
 };
 
 // Helper Functions
@@ -160,7 +165,7 @@ void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
       *fileNames = realloc(*fileNames, *capacity * sizeof(char *));
     }
     (*fileNames)[*i] = strdup(path);
-    i++;
+    (*i)++;
     return;
   }
   
@@ -173,7 +178,7 @@ void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
     if (directory->d_name[0] == '.') continue;
     
     //full path name
-    char *fullPath[_PC_PATH_MAX];
+    char fullPath[PATH_MAX];
     snprintf(fullPath, sizeof(fullPath), "%s/%s", path, directory->d_name);
 
     //Check type
@@ -184,13 +189,13 @@ void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
       fileSearch(fullPath, fileNames, i, capacity);
     }
     else if (S_ISREG(st.st_mode)) {
-      if (hasSuffix(directory->d_name, ".txt") == 0) {
+      if (hasSuffix(directory->d_name, ".txt")) {
         if (*i >= *capacity) {
           *capacity *= 2;
           *fileNames = realloc(*fileNames, *capacity * sizeof(char *));
         }
         (*fileNames)[*i] = strdup(fullPath);
-        i++;
+        (*i)++;
       }
     }
   }
@@ -200,6 +205,7 @@ void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
 
 // Calculates Word Frequency Distribution
 void wfd(struct fileData *file) {
+  if (file->totalWords == 0) return;
   for (int i = 0; i < file->uniqueWords; i++) {
     file->words[i].frequency = (double)file->words[i].count / file->totalWords;
   }
@@ -245,8 +251,13 @@ double jsd(struct fileData *f1, struct fileData *f2) {
 }
 
 //Compares two struct comparisons to ensure descending order
-int compare(const struct comparison *c1, const struct comparison *c2) {
-  return (c2->totalWords - c1->totalWords);
+int compare(const void *a, const void *b) {
+  struct comparison *c1 = *(struct comparison **)a;
+  struct comparison *c2 = *(struct comparison **)b;
+
+  if (c1->totalWords < c2->totalWords) return 1;
+  if (c1->totalWords > c2->totalWords) return -1;
+  return 0;  
 }
 
 //Frees memory for unused fileData structs
@@ -267,16 +278,20 @@ void destroyComparison(struct comparison *c) {
 // Main
 int main(int argc, char **argv) {
   if (argc < 2) return 0;
-
-  //File Search
-  //NOTE: SKIP DOTFILES
-  int totalFiles = argc-1;
-  char *path = "";
-  char **fileNames = malloc(10 * sizeof(char *));
+  
+  int totalFiles = 0;
   int nameCapacity = 10;
-  for (int i = 0; i < totalFiles; i++) {
-    path = argv[i+1];
-    fileSearch(path, fileNames, i, nameCapacity);
+  char **fileNames = malloc(nameCapacity * sizeof(char *));
+  
+  //File Search
+  for (int i = 1; i < argc; i++) {
+    fileSearch(argv[i], &fileNames, &totalFiles, &nameCapacity);
+  }
+
+  if (totalFiles < 2) {
+    for (int i = 0; i < totalFiles; i++) free(fileNames[i]);
+    free(fileNames);
+    return 0;
   }
 
   //fileData Creation and Comparison
@@ -306,6 +321,8 @@ int main(int argc, char **argv) {
   }
 
   //Memory Cleanup
+  for (int i = 0; i < totalFiles; i++) free(fileNames[i]);
+  free(fileNames);  
   for (int i = 0; i < totalFiles; i++) {
     destroyFile(files[i]);
   }

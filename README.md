@@ -73,6 +73,21 @@
         
         - Upon completion, create() returns the fileData struct for a file, but has all word frequencies set to 0.0.  
 
+    - hasSuffix()
+
+    - fileSearch()
+
+    - wfd()
+        - wfd() calculates the word frequency distribution of a file.
+            - wfd() takes a fileData struct.
+            - For each word in fileData.words, wfd() sets word.frequency = word.count fileData.totalWords.
+
+        - Our expected runtime is O(n).
+
+        - Upon completion, wfd() does not return.
+
+    - jsd() TODO    
+
     - compare()
         - compare() calculates the difference between two comparison structs' totalWords.
             - In our code, the implementation is c2->totalWords - c1->totalWords.
@@ -91,15 +106,3 @@
         - Notably, since we set struct comparison's f1 and f2 equal to the struct fileData's name field, we only have to free the pointer to struct comparison, otherwise we run into a double free error.
 
         - Upon completion, destroyFile() and destroyComparison() do not return.
-
-    - wfd()
-        - wfd() calculates the word frequency distribution of a file.
-            - wfd() takes a fileData struct.
-            - For each word in fileData.words, wfd() sets word.frequency = word.count fileData.totalWords.
-
-        - Our expected runtime is O(n).
-
-        - Upon completion, wfd() does not return.
-
-    - jsd() TODO
-        
