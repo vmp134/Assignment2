@@ -1,10 +1,27 @@
-0. Project Members
+1. Project Members
     Samuel Habib smh389, Victor Peng vmp134
 
-1. Testing Plan
+2. Testing Plan
+    - Unit Tests (compareTest.c)
+        - hasSuffix()
+            - Tested a matching suffix, a non-matching suffix, an exact match, and a string shorter than the suffix.
+        - insert()
+            - Inserted three unique words and one duplicate into an empty fileData struct.
+            - Verified uniqueWords, totalWords, alphabetical ordering, and duplicate count.
+        - wfd()
+            - Inserted a known word distribution (spam x3, eggs x1) and verified frequencies summed to 1.0.
+        - jsd()
+            - Verified the spec example ("hi there hi there" vs "hi hi out there") produces ~0.3945.
+            - Verified two identical files produce JSD = 0.
+            - Verified two fully disjoint files produce JSD = 1.
 
+    - Integration Tests (./compare)
+        - Ran ./compare hello.txt bylo.txt on the spec example files and confirmed output of ~0.39451.
+        - Ran ./compare on a directory containing .txt files and confirmed recursive traversal collected all files and skipped dotfiles.
+        - Ran ./compare on a single file and confirmed the program exits cleanly without output.
+        - Ran make asan and re-executed all above tests under AddressSanitizer and UBSan with no reported errors.
 
-2. Design Notes
+3. Design Notes
     - structure
         - Our project consists of the following structs to keep track of one file's data:
             - struct word 

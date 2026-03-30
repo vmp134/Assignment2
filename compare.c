@@ -1,47 +1,4 @@
-#include <dirent.h>
-#include <fcntl.h>
-#include <math.h>
-#include <sys/stat.h>
-#include <limits.h>
-#include <ctype.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#define BUFFERLENGTH 4096
-
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
-
-#define NC2(X) (((X)*((X)-1))/2)
-
-// Initialization
-
-struct word {
-  char *name;         // The word itself
-  int count;          // The count of said word
-  double frequency;   // The frequency of said word
-};
-
-struct fileData {
-  char *name;         // The filename
-  struct word *words; // The array containing word structs
-  int uniqueWords;    // Total unique words
-  int totalWords;     // Total words
-  int capacity;       // Room we have before realloc
-};
-
-struct comparison {
-  char *f1;           // The name of file 1
-  char *f2;           // The name of file 2
-  double jsd;         // The Jenson-Shannon Distance
-  int totalWords;     // Total words between the two files
-};
-
-// Helper Functions
+#include "compare.h"
 
 // Uses binary search to find word insertion point
 void insert(struct fileData *file, char *newWordName) {
@@ -71,7 +28,8 @@ void insert(struct fileData *file, char *newWordName) {
   // Unique Word - first we check if capacity is large enough
   if (file->uniqueWords >= file->capacity) {
     // realloc and error checking
-    struct word *temp = realloc(file->words, file->capacity * 2 * sizeof(struct word));
+    struct word *temp =
+        realloc(file->words, file->capacity * 2 * sizeof(struct word));
     if (!temp) {
       perror("realloc");
       exit(EXIT_FAILURE);
@@ -107,13 +65,13 @@ struct fileData *create(char *path) {
   size_t bytesRead = 0;
   int fd = open(path, O_RDONLY);
 
-  char *temp = malloc(64*sizeof(char));
+  char *temp = malloc(64 * sizeof(char));
   int tempCapacity = 64;
   int tempLength = 0;
 
   // Tokenizing
-  while ((bytesRead = read(fd, buf, BUFFERLENGTH)) > 0)  {
-    for (int i = 0; i < bytesRead; i++) {
+  while ((bytesRead = read(fd, buf, BUFFERLENGTH)) > 0) {
+    for (size_t i = 0; i < bytesRead; i++) {
       char readCharacter = buf[i];
 
       if (readCharacter == '-' || isalnum(readCharacter)) {
@@ -124,12 +82,11 @@ struct fileData *create(char *path) {
             perror("realloc");
             exit(EXIT_FAILURE);
           }
-          temp = temporaryTemp; 
+          temp = temporaryTemp;
         }
         temp[tempLength] = tolower(readCharacter);
         tempLength++;
-      }
-      else if (tempLength > 0) {
+      } else if (tempLength > 0) {
         temp[tempLength] = '\0';
         insert(file, strdup(temp));
         tempLength = 0;
@@ -148,17 +105,19 @@ struct fileData *create(char *path) {
   return file;
 }
 
-//Checks if a string has a suffix
+// Checks if a string has a suffix
 int hasSuffix(const char *name, const char *suffix) {
-  return (strlen(name) >= strlen(suffix) && strcmp(name + strlen(name) - strlen(suffix), suffix) == 0);
+  return (strlen(name) >= strlen(suffix) &&
+          strcmp(name + strlen(name) - strlen(suffix), suffix) == 0);
 }
 
-//Recursively searches files
+// Recursively searches files
 void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
   struct stat s;
-  if (stat(path, &s) == -1) return;
+  if (stat(path, &s) == -1)
+    return;
 
-  //Case where arg is file
+  // Case where arg is file
   if (S_ISREG(s.st_mode)) {
     if (*i >= *capacity) {
       *capacity *= 2;
@@ -168,27 +127,29 @@ void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
     (*i)++;
     return;
   }
-  
+
   DIR *dir = opendir(path);
-  if (!dir) return;
-  
+  if (!dir)
+    return;
+
   struct dirent *directory;
   while ((directory = readdir(dir)) != NULL) {
-    //Ignore dotfiles
-    if (directory->d_name[0] == '.') continue;
-    
-    //full path name
+    // Ignore dotfiles
+    if (directory->d_name[0] == '.')
+      continue;
+
+    // full path name
     char fullPath[PATH_MAX];
     snprintf(fullPath, sizeof(fullPath), "%s/%s", path, directory->d_name);
 
-    //Check type
+    // Check type
     struct stat st;
-    if (stat(fullPath, &st) == -1) continue;
+    if (stat(fullPath, &st) == -1)
+      continue;
 
     if (S_ISDIR(st.st_mode)) {
       fileSearch(fullPath, fileNames, i, capacity);
-    }
-    else if (S_ISREG(st.st_mode)) {
+    } else if (S_ISREG(st.st_mode)) {
       if (hasSuffix(directory->d_name, ".txt")) {
         if (*i >= *capacity) {
           *capacity *= 2;
@@ -205,7 +166,8 @@ void fileSearch(char *path, char ***fileNames, int *i, int *capacity) {
 
 // Calculates Word Frequency Distribution
 void wfd(struct fileData *file) {
-  if (file->totalWords == 0) return;
+  if (file->totalWords == 0)
+    return;
   for (int i = 0; i < file->uniqueWords; i++) {
     file->words[i].frequency = (double)file->words[i].count / file->totalWords;
   }
@@ -250,17 +212,19 @@ double jsd(struct fileData *f1, struct fileData *f2) {
   return sqrt(0.5 * kld1 + 0.5 * kld2);
 }
 
-//Compares two struct comparisons to ensure descending order
+// Compares two struct comparisons to ensure descending order
 int compare(const void *a, const void *b) {
   struct comparison *c1 = *(struct comparison **)a;
   struct comparison *c2 = *(struct comparison **)b;
 
-  if (c1->totalWords < c2->totalWords) return 1;
-  if (c1->totalWords > c2->totalWords) return -1;
-  return 0;  
+  if (c1->totalWords < c2->totalWords)
+    return 1;
+  if (c1->totalWords > c2->totalWords)
+    return -1;
+  return 0;
 }
 
-//Frees memory for unused fileData structs
+// Frees memory for unused fileData structs
 void destroyFile(struct fileData *file) {
   for (int i = 0; i < file->uniqueWords; i++) {
     free(file->words[i].name);
@@ -270,40 +234,41 @@ void destroyFile(struct fileData *file) {
   free(file);
 }
 
-//Frees memory for unused comparison structs
-void destroyComparison(struct comparison *c) {
-  free(c);
-} 
+// Frees memory for unused comparison structs
+void destroyComparison(struct comparison *c) { free(c); }
 
 // Main
 int main(int argc, char **argv) {
-  if (argc < 2) return 0;
-  
+  if (argc < 2)
+    return 0;
+
   int totalFiles = 0;
   int nameCapacity = 10;
   char **fileNames = malloc(nameCapacity * sizeof(char *));
-  
-  //File Search
+
+  // File Search
   for (int i = 1; i < argc; i++) {
     fileSearch(argv[i], &fileNames, &totalFiles, &nameCapacity);
   }
 
   if (totalFiles < 2) {
-    for (int i = 0; i < totalFiles; i++) free(fileNames[i]);
+    for (int i = 0; i < totalFiles; i++)
+      free(fileNames[i]);
     free(fileNames);
     return 0;
   }
 
-  //fileData Creation and Comparison
+  // fileData Creation and Comparison
   struct fileData **files = malloc(totalFiles * sizeof(struct fileData *));
-  struct comparison **comps = malloc(NC2(totalFiles) * sizeof(struct comparison *));
+  struct comparison **comps =
+      malloc(NC2(totalFiles) * sizeof(struct comparison *));
   int x = 0;
   for (int i = 0; i < totalFiles; i++) {
     files[i] = create(fileNames[i]);
     wfd(files[i]);
     for (int j = 0; j < i; j++) {
       struct comparison *c = malloc(sizeof(struct comparison));
-      c->f1 = files[j]->name; 
+      c->f1 = files[j]->name;
       c->f2 = files[i]->name;
       c->jsd = jsd(files[i], files[j]);
       c->totalWords = files[i]->totalWords + files[j]->totalWords;
@@ -312,17 +277,18 @@ int main(int argc, char **argv) {
     }
   }
 
-  //Sorting the Comparisons in Descending Order
+  // Sorting the Comparisons in Descending Order
   qsort(comps, NC2(totalFiles), sizeof(struct comparison *), compare);
 
-  //Printed Results
+  // Printed Results
   for (int i = 0; i < NC2(totalFiles); i++) {
     printf("%f %s %s\n", comps[i]->jsd, comps[i]->f1, comps[i]->f2);
   }
 
-  //Memory Cleanup
-  for (int i = 0; i < totalFiles; i++) free(fileNames[i]);
-  free(fileNames);  
+  // Memory Cleanup
+  for (int i = 0; i < totalFiles; i++)
+    free(fileNames[i]);
+  free(fileNames);
   for (int i = 0; i < totalFiles; i++) {
     destroyFile(files[i]);
   }
@@ -331,6 +297,6 @@ int main(int argc, char **argv) {
     destroyComparison(comps[i]);
   }
   free(comps);
-  
+
   return EXIT_SUCCESS;
 }
