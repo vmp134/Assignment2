@@ -86,7 +86,7 @@
             - create() then performs a tokenizing step on the file.
                 - We have a temporary string that we "push" characters into, and "pop" out a word when we reach a space.
                 - For each word in the file, create() calls insert().
-            - create() runs one final check to 
+            - create() runs one final check to ensure the last word in the file is inserted, as it may not have been followed by a non-word character to trigger insertion.
         
         - Upon completion, create() returns the fileData struct for a file, but has all word frequencies set to 0.0.  
 
